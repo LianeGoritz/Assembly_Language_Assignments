@@ -1,0 +1,289 @@
+#CPSC 3614 Programming Quiz - Liane Goritz
+
+.text
+
+main:
+#-----------------------------input list size-----------------------------------
+la $a0,	input_size
+li $v0, 4
+syscall
+
+li $v0, 5
+syscall
+
+la $t0, size
+sw $v0, 0($t0)
+move $a1, $v0
+#------------------------------------------------------------------------------
+
+
+#-----------------------------input list elements------------------------------
+li $s1, 0
+la $t0, list
+li $t2, 0
+
+element_loop:
+addi $s1, $s1, 1
+bgt $s1, $a1, end_element_loop
+
+la $a0, input_element
+li $v0, 4
+syscall
+
+li $v0, 5
+syscall
+
+add $t3, $t0, $t2
+sw $v0, 0($t3)
+addi $t2, $t2, 4
+
+j element_loop
+
+end_element_loop:
+#------------------------------------------------------------------------------
+
+
+#-----------------------------------------calculate average-----------------------
+li $s1, 0
+li $t2, 0
+
+la $t0, average
+lw $a2, 0($t0)
+
+la $t0, list
+
+average_loop:
+addi $s1, $s1, 1
+bgt $s1, $a1, end_average_loop
+
+add $t3, $t0, $t2
+
+#add all numbers up in average variable
+lw $a0, 0($t3)
+add $a2, $a2, $a0
+
+
+addi $t2, $t2, 4
+
+j average_loop
+
+end_average_loop:
+la $t1, average
+sw $a2, 0($t1)
+
+la $t0, size
+lw $a0, 0($t0)
+
+div $a2, $a0
+mfhi $a3
+mflo $v0
+
+sw $v0, 0($t1)
+#---------------------------------------------------------------------------------
+
+
+#--------------------------------calculate min/max---------------------------------
+li $s1, 0
+li $t2, 0
+la $t0, list
+
+li $s2, 1000
+li $s3, -1000
+li $s4, 1
+
+li $s5, 0
+li $s6, 0
+
+min_max_loop:
+addi $s1, $s1, 1
+bgt $s1, $a1, end_min_max_loop
+
+add $t3, $t0, $t2
+lw $a2, 0($t3)
+
+beq $s4, 1, init_loop
+
+blt $a2, $s2, min_loop
+bgt $a2, $s3, max_loop
+
+j next_loop
+
+init_loop:
+addi $s2, $a2, 0
+addi $s3, $a2, 0
+addi $s5, $a2, 0
+
+#initial index
+addi $s5, $s1, 0
+addi $s6, $s1, 0
+
+addi $s4, $s4, 1
+j next_loop
+
+min_loop:
+addi $s5, $s1, 0
+move $s2, $a2
+j next_loop
+
+max_loop:
+addi $s6, $s1, 0
+move $s3, $a2
+j next_loop
+
+next_loop:
+addi $t2, $t2, 4
+j min_max_loop
+
+end_min_max_loop:
+la $t0, min_val
+sw $s2, 0($t0)
+
+la $t0, max_val
+sw $s3, 0($t0)
+
+la $t0, min_index
+sw $s5, 0($t0)
+
+la $t0, max_index
+sw $s6, 0($t0)
+#---------------------------------------------------------------------------------
+
+
+#----------------------------output list------------------------------------------
+la $a0, output_list
+li $v0, 4
+syscall
+
+la $t0, size
+lw $a0, 0($t0)
+
+li $s1, 0
+la $t0, list
+li $t2, 0
+
+li $s2, 0
+
+output_loop:
+addi $s1, $s1, 1
+bgt $s1, $a1, end_output_loop
+
+add $t3, $t0, $t2
+lw $a0, 0($t3)
+li $v0, 1
+syscall
+
+addi $t2, $t2, 4
+
+addi $s2, $s2, 1
+blt $s2, $a1, spacer_loop
+
+j output_loop
+
+spacer_loop:
+la $a0, output_spacer
+li $v0, 4
+syscall
+
+j output_loop
+
+end_output_loop:
+#---------------------------------------------------------------------------------
+
+
+#-------------------------output average------------------------------------------
+la $a0, output_next_line
+li $v0, 4
+syscall
+
+la $a0, output_average
+li $v0, 4
+syscall
+
+la $t0, average
+lw $a0, 0($t0)
+li $v0, 1
+syscall
+#---------------------------------------------------------------------------------
+
+
+#------------------------------output max/index-----------------------------------
+la $a0, output_next_line
+li $v0, 4
+syscall
+
+la $a0, output_max
+li $v0, 4
+syscall
+
+la $t0, max_val
+lw $a0, 0($t0)
+li $v0, 1
+syscall
+
+la $a0, output_spacer
+li $v0, 4
+syscall
+
+la $a0, output_index
+li $v0, 4
+syscall
+
+la $t0, max_index
+lw $a0, 0($t0)
+li $v0, 1
+syscall
+#---------------------------------------------------------------------------------
+
+
+#------------------------------output min/index-----------------------------------
+la $a0, output_next_line
+li $v0, 4
+syscall
+
+la $a0, output_min
+li $v0, 4
+syscall
+
+la $t0, min_val
+lw $a0, 0($t0)
+li $v0, 1
+syscall
+
+la $a0, output_spacer
+li $v0, 4
+syscall
+
+la $a0, output_index
+li $v0, 4
+syscall
+
+la $t0, min_index
+lw $a0, 0($t0)
+li $v0, 1
+syscall
+#---------------------------------------------------------------------------------
+
+
+#-----------------------------exit program----------------------------------------
+li $v0, 10
+syscall
+#---------------------------------------------------------------------------------
+
+.data
+list: .space 120
+size: .word 0
+average: .word 0
+min_val: .word 0
+max_val: .word 0
+min_index: .word 0
+max_index: .word 0
+
+input_size: .asciiz "Please enter the size of the list: \n"
+input_element: .asciiz "Please enter the element\n"
+output_list: .asciiz "The original list is: "
+output_spacer: .asciiz ", "
+output_next_line: .asciiz "\n"
+output_average: .asciiz "Average: "
+output_min: .asciiz "Min number: "
+output_max: .asciiz "Max number: "
+output_index: .asciiz "Index: "

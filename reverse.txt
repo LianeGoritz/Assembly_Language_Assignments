@@ -1,0 +1,122 @@
+#CPSC 3615 Assignment 4 - Liane Goritz
+
+.text
+
+main:
+#---------------------------------------take input of name------------------------------------
+#printing "Please input your full name (First_Name Last_Name):\n"
+la $a0, input_name			#load address for input_name
+li $v0, 4				#printing string function on syscall
+syscall
+
+#taking input string
+la $a0, name_original			#load address for name_original
+la $v0, 8				#taking input string function on syscall
+move $t0, $a0
+syscall
+#---------------------------------------------------------------------------------------------
+
+
+#--------------------------------reverse each name in string----------------------------------
+#setup for first loop
+li $t1, 0				#setting counter for first name length to zero
+
+#counts the length of the first name
+first_length_loop:
+lb $t2, 0($a0)				#loading in character from string at a0
+beq $t2, ' ', end_first_length_loop	#exits loop on first space of name string
+addi $a0, $a0, 1			#moves to next character of string
+addi $t1, $t1, 1			#counts each character
+j first_length_loop			#jumps to start of first_length_loop
+
+#saves first name length after end of loop
+end_first_length_loop:
+la $a0, first_length			#load address for first_length
+sw $t1, 0($a0) 				#store value of the length of first name
+
+#setup for second loop
+la $a0, name_original			#load address for name_original
+li $t1, 0				#sets counter for full name string length to zero
+li $t3, 1				#sets subtracter for decrementing by 1
+
+#counts the length of the full string (full name plus the space)
+full_length_loop:			
+lb $t2, 0($a0)				#loads in character from string at a0
+beqz $t2, end_full_length_loop		#exits loop at the end of string
+addi $a0, $a0, 1			#move to next character of string
+addi $t1, $t1, 1			#counts each character
+j full_length_loop			#jumps to start of full_length_loop
+
+#saves full string length after end of loop
+end_full_length_loop:
+sub $t1, $t1, $t3			#subtracts extra count from counting loop
+la $a0, full_length			#load address for full_length
+sw $t1, 0($a0)				#store value of the length of whole string
+#---------------------------------------------------------------------------------------------
+
+
+#--------------------------------output reversed name-----------------------------------------
+#printing next line
+la $a0, next_line			#load address for next_line
+li $v0, 4				#printing string function on syscall
+syscall
+
+#printing "Output:\n"
+la $a0, output				#load address for output
+li $v0, 4				#printing string function on syscall
+syscall
+
+#setup first loop
+la $a0, name_original			#load address for name_original
+la $a1, first_length			#load address of first_length
+lw $t5, 0($a1)				#load value of first_length into t5
+
+#prints the first name by last letter to first letter
+first_rev_loop:
+li $v0, 11				#printing character function on syscall
+sub $t5, $t5, $t3			#decrement by 1 to next character
+lb $a0, name_original($t5)		#loads character at current point
+syscall
+
+beq $t5, 0, end_first_rev_loop		#exits loop at the beginning of first name
+
+j first_rev_loop			#jumps to start of first_rev_loop
+
+#prints space for between first and last name
+end_first_rev_loop:
+la $a0, space				#load address for space
+li $v0, 4				#printing string function on syscall
+syscall
+
+#setup for second loop
+lw $t5, 0($a1)				#load value of first_length into t5 again
+
+#prints last name in reverse
+last_rev_loop:
+li $v0, 11				#printing character function on syscall
+sub $t1, $t1, $t3			#decrement by 1 to next character
+lb $a0, name_original($t1)		#loads character at current point
+syscall
+
+beq $t1, $t5, end_last_rev_loop		#exits loop at the beginning of last name
+
+j last_rev_loop				#jumps to start of last_rev_loop
+
+end_last_rev_loop:
+#---------------------------------------------------------------------------------------------
+
+
+#---------------------------------exit program------------------------------------------------
+li $v0, 10				#exit the program function on syscall
+syscall
+#---------------------------------------------------------------------------------------------
+
+.data
+name_original: .space 30	#full name
+first_length: .word 0		#length of first name
+full_length: .word 0		#length of full string
+
+input_name: .asciiz "Please input your full name (First_Name Last_Name):\n"
+output: .asciiz "Output: "
+next_line: .asciiz "\n" 
+space: .asciiz " "

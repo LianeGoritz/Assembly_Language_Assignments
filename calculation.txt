@@ -1,0 +1,237 @@
+#CPSC 3615 Assignment 2 - Liane Goritz
+
+.text
+
+main:
+#----------------------------output of formulas---------------------------------
+#printing "The formulas to be used are:\n"
+la $a0, formula_structure	#load address for formula_structure	
+li $v0, 4			#printing string function on syscall
+syscall
+
+#printing "Add: A + B\n"
+la $a0, add_formula		#load address for add_formula
+li $v0, 4			#printing string function on syscall
+syscall
+
+#printing "Subtract: A - B\n"
+la $a0, subtract_formula	#load address for subtract_formula
+li $v0, 4			#printing string function on syscall
+syscall
+
+#printing "Multiply: A x B\n"
+la $a0, multiply_formula	#load address for multiply_formula
+li $v0, 4			#printing string function on syscall
+syscall
+
+#printing "Divide: A / B\n"
+la $a0, divide_formula		#load address for divide_formula
+li $v0, 4			#printing string function on syscall
+syscall
+
+#printing next line
+la $a0, output_next_line	#load address for output_next_line
+li $v0, 4			#printing string function on syscall
+syscall
+#---------------------------------------------------------------------------------
+
+
+#----------------------------input integers---------------------------------------
+#saving integer A:
+#printing the prompt "Please enter the first integer 'A':\n"
+la $a0, input_integer_A		#load address for input_integer_A
+li $v0, 4			#printing string function on syscall
+syscall
+
+#taking in user input
+la $v0, 5			#taking input integer function on syscall
+syscall
+
+#saving the result from v0 to the variable "integer_A"
+la $t0, integer_A		#load address for integer_A
+sw $v0, 0($t0)			#store value of integer_A
+move $a1, $v0			#copy value of integer_A in v0 to a1
+
+
+#saving integer B:
+#printing the prompt "Please enter the second integer 'B':\n"
+la $a0, input_integer_B		#load address for input_integer_B
+li $v0, 4			#printing string function on syscall
+syscall
+
+#taking in user input
+la $v0, 5			#taking input integer function on syscall
+syscall
+
+#saving the result from v0 to the variable "integer_B"
+la $t0, integer_B		#load address for integer_B
+sw $v0, 0($t0)			#store value of integer_B	
+move $a2, $v0			#copy value of integer_B in v0 to a1
+#---------------------------------------------------------------------------------
+
+
+#------------------------------calculations---------------------------------------
+#calculating the addition
+la $t0, add_result		#load address for add_result
+add $s0, $a1, $a2		#add a1 and a2
+sw $s0, 0($t0)			#store value of s0
+
+#calculating the subtraction
+la $t0, sub_result		#load address for sub_result
+sub $s0, $a1, $a2		#subtract a2 from a1
+sw $s0, 0($t0)			#store value of s0
+
+#calculating the multiplication
+la $t0, mult_result		#load address for mult_result
+mult $a1, $a2			#multiply a1 and a2
+mfhi $a3			#store second portion of result in a3
+mflo $v0			#store first portion of result in v0
+sw $v0, 0($t0)			#store value of v0
+
+#calculating the division and converting values for output
+la $t0, div_result_int		#load address for div_result_int
+#determining the quotient
+div $a1, $a2			#division as integers
+mfhi $a3			#stores the remainder in a3
+mflo $v0			#stores the quotient in v0
+sw $v0, 0($t0)			#saving quotient value to div_result_int
+move $s1, $v0			#copy quotient to s1
+
+#converting A and B to floats/single precision numbers
+abs $s2, $a1			#saves absolute value of a1 in s2
+abs $s3, $a2			#saves absolute value of a2 in s3
+
+mtc1 $s2, $f0			#copies s2 to f0 as a float
+mtc1 $s3, $f1			#copies s3 to f1 as a float
+cvt.s.w $f0, $f0 		#converting f0 into single precision number
+cvt.s.w $f1, $f1		#converting f1 into single precision number
+
+#dividing A and B as float numbers
+div.s $f2, $f0, $f1		#divides f0 by f1 and stores it in f2
+
+
+#converting the remainder integer to decimal form (stored as an int for output purposes)
+abs $s1, $s1			#converts s1 into absolute value
+mtc1 $s1, $f4			#copying s1 to f4
+cvt.s.w $f4, $f4 		#converting f4 into single precision number
+
+sub.s $f2, $f2, $f4		#substracting the quotient from the whole number
+
+#rounding the leftover number
+li.s $f3, 100.0			#f3 is set to 100
+mul.s $f2, $f2, $f3		#multiplying f2 by 100
+round.w.s $f2, $f2		#rounds f2 to nearest whole number
+mfc1 $a3, $f2			#converts f2 back into an integer and stores it in a3
+
+#saving the remainder decimal (x 100) as a whole number for output
+la $t0, div_result_dec		#load address for div_result_dec
+sw $a3, 0($t0)			#store decimal value for division result
+#---------------------------------------------------------------------------------
+
+
+#-----------------------------output results--------------------------------------
+
+#printing "The addition result is "
+la $a0, output_add		#load address for output_add
+li $v0, 4			#printing string function on syscall
+syscall
+
+#printing addition result value
+la $t0, add_result		#load address for add_result
+lw $a0, 0($t0)			#load value of add_result to a0
+li $v0, 1			#printing integer function on syscall
+syscall
+
+#printing next line
+la $a0, output_next_line	#load address for output_next_line
+li $v0, 4			#printing string function on syscall
+syscall
+
+#printing "The subtraction result is "
+la $a0, output_sub		#load address for output_sub
+li $v0, 4			#printing string function on syscall
+syscall
+
+#printing subtraction result value
+la $t0, sub_result		#load address for sub_result
+lw $a0, 0($t0)			#load value of sub_result to a0
+li $v0, 1			#printing integer function on syscall
+syscall
+
+#printing next line
+la $a0, output_next_line	#load address for output_next_line
+li $v0, 4			#printing string function on syscall
+syscall
+
+#printing "The multiplication result is "
+la $a0, output_mult		#load address for output_mult
+li $v0, 4			#printing string function on syscall
+syscall
+
+#printing multiplication result value
+la $t0, mult_result		#load address for mult_result
+lw $a0, 0($t0)			#load value of mult_result to a0
+li $v0, 1			#printing integer function on syscall
+syscall
+
+#printing next line
+la $a0, output_next_line	#load address for output_next_line
+li $v0, 4			#printing string function on syscall
+syscall
+
+#printing "The division result is "
+la $a0, output_div		#load address for output_div
+li $v0, 4			#printing string function on syscall
+syscall
+
+#printing division result value (integer portion)
+la $t0, div_result_int		#load address for div_result_int
+lw $a0, 0($t0)			#load value of div_result_int to a0
+li $v0, 1			#printing integer function on syscall
+syscall
+
+#printing "The division result is "
+la $a0, output_decimal_point	#load address for output_decimal_point
+li $v0, 4			#printing string function on syscall
+syscall
+
+#printing division result value (decimal portion)
+la $t0, div_result_dec		#load address for div_result_dec
+lw $a0, 0($t0)			#load value of div_result_dec to a0
+li $v0, 1			#printing integer function on syscall
+syscall
+#---------------------------------------------------------------------------------
+
+
+#-----------------------------exit program----------------------------------------
+#exits the program
+li $v0, 10			#load exit program function on syscall
+syscall
+#---------------------------------------------------------------------------------
+
+.data
+integer_A: .word 0			#integer 1
+integer_B: .word 0			#integer 2
+
+add_result: .word 0			#add result
+sub_result: .word 0			#subtract result
+mult_result: .word 0			#multiply result
+div_result_int: .word 0			#divide result whole number portion
+div_result_dec: .word 0			#divide result decimal portion 
+
+formula_structure: .asciiz "The formulas to be used are:\n"
+add_formula: .asciiz "Add: A + B\n"
+subtract_formula: .asciiz "Subtract: A - B\n"
+multiply_formula: .asciiz "Multiply: A x B\n"
+divide_formula: .asciiz "Divide: A / B\n"
+
+input_integer_A: .asciiz "Please enter the first integer 'A':\n"
+input_integer_B: .asciiz "Please enter the second integer 'B':\n"
+
+output_add: .asciiz "The addition result is "
+output_sub: .asciiz "The subtraction result is "
+output_mult: .asciiz "The multiplication result is "
+output_div: .asciiz "The division result is "
+output_next_line: .asciiz "\n"
+output_decimal_point: .asciiz "."
+

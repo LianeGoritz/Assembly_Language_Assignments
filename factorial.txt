@@ -1,0 +1,104 @@
+#CPSC 3615 Assignment 3 - Liane Goritz
+
+.text
+
+main:
+#----------------------------input factorial number---------------------------------------
+#add in range conditions or else keep asking for input
+li $s1, 0			#condition for range check s1 is set to 0
+li $a2, 0			#min of range a2 is set to 0
+li $a3, 12			#max of range a3 is set to 12
+
+input_loop:
+beq $s1, 1, end_input_loop	#ends loop if check value has changed to 1
+
+#saving factorial number:
+#printing the prompt "Please enter an integer 'N' between 0 and 12 to calculate factorial:\n"
+la $a0, input_prompt		#load address for input_prompt
+li $v0, 4			#printing string function on syscall
+syscall
+
+#taking in user input
+la $v0, 5			#taking input integer function on syscall
+syscall
+
+#saving the result from v0 to the variable "integer_N"
+la $t0, integer_N		#load address for integer_N
+sw $v0, 0($t0)			#store value of integer_N
+move $a1, $v0			#copy value of integer_N in v0 to a1
+
+#checks if N is within range
+ble $a1, $a2, redo_loop		#branches if N is less than or equal to 0
+bge $a1, $a3, redo_loop		#branches if N is greater than or equal to 12
+
+j done_loop			#jumps to start of input_loop
+
+redo_loop:
+j input_loop			#jumps to start of input_loop
+
+done_loop:
+addi $s1, $s1, 1		#adds 1 to range check to stop loop
+j input_loop			#jumps to start of input_loop
+
+end_input_loop:
+#-----------------------------------------------------------------------------------------
+
+
+#---------------------------calculate factorial-------------------------------------------
+li $s1, 0			#interation check for loop
+la $t0, integer_N		#load address for integer_N
+lw $a2, 0($t0)			#load integer N value into a2
+li $s6, 1			#subtractor value for a2
+
+#set factorial initially to 1
+la $t0, factorial		#loads address for factorial
+li $s3, 1			#sets s3 to 1
+sw $s3, 0($t0)			#stores the value of factorial to 1 from s3
+
+calculate_loop:
+beq $a2, $s6, end_calculate_loop	#ends loop when a2 is equal to s6 = 1
+
+lw $a3, 0($t0)			#loads current value of factorial
+
+#factorial calculation
+mult $a3, $a2			#multiplies each reduced value from N to 1 with current factorial value
+mfhi $s4			#second portion of result number
+mflo $v0			#first portion of result number
+sw $v0, 0($t0)			#stores the first portion in factorial
+
+sub $a2, $a2, $s6		#subtracts s6 from a3, a3<-a3-s6 where s6 = 1
+
+j calculate_loop		#jumps to start of calculate_loop
+
+end_calculate_loop:
+#-----------------------------------------------------------------------------------------
+
+
+#----------------------------output factorial result--------------------------------------
+la $a0, output_next_line	#load address for output_next_line
+li $v0, 4			#printing string function on syscall
+syscall
+
+la $a0, output_prompt		#load address for output_prompt
+li $v0, 4			#printing string function on syscall
+syscall 
+
+la $t0, factorial		#load address for factorial
+lw $a0, 0($t0)			#load value of factorial to a0
+li $v0, 1			#printing integer function on syscall
+syscall	
+#-----------------------------------------------------------------------------------------
+
+
+#----------------------------------exit program-------------------------------------------
+li $v0, 10			#exit the program function on syscall
+syscall
+#-----------------------------------------------------------------------------------------
+
+.data
+integer_N: .word 0		#integer N
+factorial: .word 0		#factorial results
+
+input_prompt: .asciiz "Please enter an integer 'N' between 0 and 12 to calculate factorial:\n"
+output_next_line: .asciiz "\n"
+output_prompt: .asciiz "The factorial result is "

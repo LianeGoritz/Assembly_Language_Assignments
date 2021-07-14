@@ -1,0 +1,177 @@
+#CPSC 3615 Assignment 1 - Liane Goritz
+
+.text
+
+main:
+#--------------------------input list size---------------------------------------------
+#printing the prompt "Please enter the size of the list:\n"
+la $a0, input_size		#loads prompt address into a0 for printing
+li $v0, 4			#loads v0 for printing string function on syscall
+syscall
+
+#taking the input
+li $v0, 5 			#loads v0 for user input function on syscall
+syscall
+
+#copying the size from v0 to the variable "size"
+la $t0, size			#loads "size" address into t0
+sw $v0, 0($t0)			#saves value of "size" from v0 to address in t0
+move $a1, $v0			#copys "size" from v0 to a1
+#-------------------------------------------------------------------------------------
+
+
+#----------------------------input elements loop--------------------------------------
+#input the elements of the list
+li $s1, 0			#sets iteration counter for loop to zero
+la $t0, list			#loads "list" address into t0
+li $t1, 0			#sets element counter for loop to zero
+
+
+#initial val loaded
+li $s4, 1			#sets check for initial list value for loop to one
+
+#min val variable loaded
+li $s2, 1000			#sets initial min value to 1000, saved to min later
+
+#max val variable loaded
+li $s3, -1000			#sets initial max value to -1000, save to max later
+
+
+#printing the prompt of "Please enter the element\n"
+la $a0,	input_element		#loads prompt address into a0 for printing
+li $v0, 4			#loads v0 for printing string function on syscall
+syscall
+
+
+read_loop:
+addi $s1, $s1, 1		#counts each iteration for loop, s1 <- s1 + 1
+bgt $s1, $a1, end_read_loop	#checks for end loop condition, s1 < size
+
+#taking the input
+li $v0, 5			#loads v0 for user input function on syscall
+syscall
+
+add $t3, $t0, $t1		#calculates address of current element space in list
+sw $v0, 0($t3)			#saves current element to address in list
+move $a2, $v0			#moves input info to a2 for comparisons
+
+beq $s4, 1, init_loop		#checks for initial min/max element setup
+
+blt $a2, $s2, min_loop		#checks if current element is the new min, branches if true
+bgt $a2, $s3, max_loop		#checks if current element is the new max, branches if true
+
+
+j next_loop			#jumps to "next_loop" where loop is re-called
+
+init_loop:
+addi $s2, $a2, 0		#saves initial list element to min
+addi $s3, $a2, 0		#saves initial list element to max
+addi $s5, $a2, 0		#used for program error fix during debugging....may be deleted later if unsused
+
+addi $s4, $s4, 1		#adds 1 to initial loop condition so init_loop will not be called again
+j next_loop			#jumps to "next_loop" where loop is re-called
+
+min_loop:
+move $s2, $a2			#copys current element value to min
+j next_loop			#jumps to "next_loop" where loop is re-called
+
+max_loop:
+move $s3, $a2 			#copys current element value to max
+j next_loop			#jumps to "next_loop" where loop is re-called
+
+next_loop:
+addi $t1, $t1, 4		#jumps to next element address in list
+j read_loop			#restarts at the top of read_loop
+
+end_read_loop:			#called at the end of read_loop, continues on to the rest of the program
+#---------------------------------------------------------------------------------------
+
+
+#---------------------------output display loop-----------------------------------------
+la $a0, output_list		#loads prompt address into a0 for printing
+li $v0, 4			#loads v0 for printing string function on syscall
+syscall
+
+la $t0, size			#loads "size" address into t0
+lw $a0, 0($t0)			#loads value of "size" into a0
+
+
+li $s1, 0			#sets iteration counter for loop to zero
+la $t0, list			#loads "list" address into t0
+li $t2, 0			#sets element counter for loop to zero
+
+
+display_loop:
+addi $s1, $s1, 1		#counts each iteration for loop, s1 <- s1 + 1
+bgt $s1, $a1, end_display_loop	#checks for end loop condition, s1 < size
+
+add $t3, $t0, $t2		#calculates address of current element space in list
+lw $a0, 0($t3)			#loads current element from list
+li $v0, 1			#loads v0 for printing integer function on syscall
+syscall
+
+la $a0, output_spacer		#loads prompt address into a0 for printing
+li $v0, 4			#loads v0 for printing string function on syscall
+syscall
+
+addi $t2, $t2, 4		#jumps to next element address in list
+j display_loop			#restarts at the top of display_loop
+
+end_display_loop:		#called at the end of display_loop, continues on to the rest of the program
+#--------------------------------------------------------------------------------------
+
+
+#--------------------------------output min/max values---------------------------------
+#output next line
+la $a0, output_enter		#loads prompt address into a0 for printing
+li $v0, 4			#loads v0 for printing string function on syscall
+syscall
+
+#output min value
+la $a0, output_min		#loads prompt address into a0 for printing
+li $v0, 4			#loads v0 for printing string function on syscall
+syscall
+
+la $t5, min			#loads "min" address into t6
+sw $s2, 0($t5)			#saves final min value to "min"
+lw $a0, 0($t5)			#loads min value from "min" to a0
+li $v0, 1			#loads v0 for printing integer function on syscall
+syscall
+
+#output next line
+la $a0, output_enter		#loads prompt address into a0 for printing
+li $v0, 4			#loads v0 for printing string function on syscall
+syscall
+
+#output max value
+la $a0, output_max		#loads prompt address into a0 for printing
+li $v0, 4			#loads v0 for printing string function on syscall
+syscall
+
+la $t6, max			#loads "max" address into t6
+sw $s3, 0($t6)			#saves final max value to "max"
+lw $a0, 0($t6)			#loads max value from "max" to a0
+li $v0, 1			#loads v0 for printing integer function on syscall
+syscall
+#--------------------------------------------------------------------------------------
+
+
+#----------------------------------------end program-----------------------------------
+#exit the program
+li $v0, 10			#loads v0 for exit program function on syscall
+syscall
+#--------------------------------------------------------------------------------------
+
+.data
+list: .space 20			#list data
+size: .word 0			#size data
+min: .word 0			#min value data
+max: .word 0			#max value data
+
+input_size: .asciiz "Please enter size of list:\n"
+input_element: .asciiz "Please enter elements of list:\n"
+output_list: .asciiz "The list: "
+output_spacer: .asciiz " "
+output_min: .asciiz "Min value: "
+output_max: .asciiz "Max value: "
+output_enter: .asciiz "\n"
